@@ -1,9 +1,6 @@
 <template>
   <div id="app">
     <Header />
-    <nav>
-      <router-link to="/">Home</router-link>
-    </nav>
     <router-view />
     <Footer />
   </div>
@@ -31,12 +28,4 @@ export default {
   color: #2c3e50;
 }
 
-nav {
-  padding: 30px;
-}
-
-nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
 </style>
