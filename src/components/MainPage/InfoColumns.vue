@@ -23,7 +23,7 @@
       <li></li>
     </ul>
   </div>
-  <span style="color: gold; font-size: large; font-weight: bold;"><p>Napíšte nám. Pripravíme vám ponuku na mieru.</p></span>
+  <span style="color: rgb(0, 0, 0); font-size: large; font-weight: bold;"><p>Napíšte nám. Pripravíme vám ponuku na mieru.</p></span>
   <i class="fa-solid fa-book-medical fa-4x"></i>
   <h1>Všeobecné obchodné podmienky poskytovania zdravotnej starostlivosti</h1>
   <p>Upravte si podrobnejšie vzájomné práva a povinnosti s vašimi pacientami. Jasné pravidlá pomáhajú predchádzať konfliktom.</p>
