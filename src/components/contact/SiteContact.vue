@@ -1,12 +1,25 @@
 <template>
   <div>
-    <form @submit.prevent="submitForm">
-      <!-- Your form fields go here -->
-      <label for="name">Name:</label>
+    <form class="contact-form" @submit.prevent="submitForm">
+      <h2>Kontaktný formulár</h2>
+      <label for="name">Meno:</label>
       <input type="text" id="name" v-model="formData.name" required />
 
-      <!-- Other form fields... -->
+      <label for="surname">Priezvisko:</label>
+      <input type="text" id="surname" v-model="formData.surname" required />
+      
+      <label for="email">Email:</label>
+      <input type="email" id="email" v-model="formData.email" required />
 
+      <label for="company">Firma:</label>
+      <input type="text" id="company" v-model="formData.company" required />
+
+      <label for="phone">Telefón:</label>
+      <input type="text" id="phone" v-model="formData.phone" required />
+
+      <label for="message">Správa:</label>
+      <textarea id="message" v-model="formData.message" rows="5" required></textarea>
+      
       <button type="submit">Submit</button>
     </form>
   </div>
@@ -20,29 +33,66 @@ export default {
     return {
       formData: {
         name: "",
+        surname: "",
+        email: "",
+        company: "",
+        phone: "",
+        message: "",
+      },
+      formErrors: {
+        name: false,
+        surname: false,
+        email: false,
+        company: false,
+        phone: false,
+        message: false,
       },
     };
   },
   methods: {
     submitForm() {
-      // Send the form data to the backend
+      if (!this.validateForm()) {
+        return; 
+      }
+
+      this.resetFormErrors();
+
       axios
         .post("http://localhost:3000/submit-form", this.formData)
         .then((response) => {
           console.log(response.data);
-          // Optionally, handle success on the frontend
         })
         .catch((error) => {
           console.error(error);
-          // Optionally, handle errors on the frontend
         });
+    },
+    validateForm() {
+      let isValid = true;
+      for (const field in this.formData) {
+        if (!this.formData[field]) {
+          this.formErrors[field] = true;
+          isValid = false;
+        }
+      }
+      return isValid;
+    },
+    validateField(fieldName) {
+      if (!this.formData[fieldName]) {
+        this.formErrors[fieldName] = true;
+      } else {
+        this.formErrors[fieldName] = false;
+      }
+    },
+    resetFormErrors() {
+      for (const field in this.formErrors) {
+        this.formErrors[field] = false;
+      }
     },
   },
 };
 </script>
 
 <style scoped>
-/* ContactForm.vue-specific styles */
 
 .contact-form {
   max-width: 400px;
@@ -55,7 +105,8 @@ label {
   font-weight: bold;
 }
 
-input {
+input,
+textarea {
   width: 100%;
   padding: 8px;
   margin-bottom: 16px;
@@ -67,6 +118,7 @@ button {
   color: #fff;
   padding: 10px 20px;
   border: none;
+  margin-top: 10px; 
   cursor: pointer;
   font-size: 16px;
 }

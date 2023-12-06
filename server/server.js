@@ -2,89 +2,111 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const cors = require('cors');
 const helmet = require('helmet');
-require('dotenv').config({ path: '.env.local' });
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+const sanitizeHtml = require('sanitize-html');
 const app = express();
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors()); // Handle CORS
-app.use(helmet()); // Add security headers
+app.use(cors()); 
+app.use(helmet()); 
 
-dotenv.config();
 
 app.get('/', (req, res) => {
     res.send('This is the main page with information and links to subpages.');
 });
   
-app.get('/terms-of-service', (req, res) => {
+app.get('/terms', (req, res) => {
     res.send('This is the Terms of Service page.');
 });
   
-app.get('/privacy-policy', (req, res) => {
-    res.send('This is the Privacy Policy page.');
+app.get('/contact', (req, res) => {
+    res.send('This is the Contact page.');
 });
-// Nodemailer configuration
-const transporter = nodemailer.createTransport({
-  service: 'Gmail', // e.g., 'Gmail' or use SMTP settings
+
+const transport = nodemailer.createTransport({
+  host: 'smtp.m1.websupport.sk',
+  port: 465,
+  secure: true, 
   auth: {
-    user: process.env.EMAIL_ADDRESS, // your email address
-    pass: process.env.EMAIL_PASSWORD, // your email password
+    user: 'forms@med-admin.sk',
+    pass: process.env.EMAIL_PASSWORD, 
   },
 });
 
-// Function to send email
 function sendEmail(data) {
-  const mailOptions = {
-    from: process.env.EMAIL_ADDRESS, // sender's email address
-    to: process.env.REC_EMAIL_ADDRESS, // recipient's email address
-    subject: 'testing form submitted',
-    html: `
-      <p>Name: ${data.name}</p>
-      <p>Surname: ${data.surname}</p>
-      <p>Company Name: ${data.company}</p>
-      <p>Email Address: ${data.email}</p>
-      <p>Phone Number: ${data.phone}</p>
-      <p>Message: ${data.message}</p>
-    `,
-  };
+  return new Promise((resolve, reject) => {
+    const mailOptions = {
+      from: "forms@med-admin.sk",
+      to: "juro.zvolensky@gmail.com",
+      subject: 'testing form submitted',
+      html: `
+        <p>Name: ${data.name}</p>
+        <p>Surname: ${data.surname}</p>
+        <p>Company Name: ${data.company}</p>
+        <p>Email Address: ${data.email}</p>
+        <p>Phone Number: ${data.phone}</p>
+        <p>Message: ${data.message}</p>
+      `,
+    };
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.log('Email could not be sent:', error);
-    } else {
-      console.log('Email sent:', info.response);
-    }
+    console.log(process.env.local);
+
+    transport.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log('Email could not be sent:', error);
+        reject('Email could not be sent.');
+      } else {
+        console.log('Email sent:', info.response);
+        resolve('Form submission successful');
+      }
+    });
   });
 }
 
-app.post('/submit-form', (req, res) => {
+
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+
+app.post('/submit-form', async (req, res) => {
   const formData = req.body;
 
-  const requiredFields = ['Meno', 'Priezvisko', 'Názov PZS', 'Email', 'Telefón', 'Správa'];
- 
+  const requiredFields = ['name', 'surname', 'company', 'email', 'phone', 'message'];
+
   for (const field of requiredFields) {
     if (!formData[field]) {
       return res.status(400).send(`${field} is required.`);
     }
   }
 
-  if (!isValidEmail(formData.correo)) {
+  if (!isValidEmail(formData.email)) {
     return res.status(400).send('Invalid Email Address.');
   }
-  
-  const sanitizedFormData = {
-    'Meno': sanitizeHtml(formData['Meno']),
-    'Priezvisko': sanitizeHtml(formData['Priezvisko']),
-    'Názov PZS': sanitizeHtml(formData['Názov PZS']),
-    'Email': sanitizeHtml(formData['Email']),
-    'Telefón': sanitizeHtml(formData['Telefón']),
-    'Správa': sanitizeHtml(formData['Správa']),
-  };
-  
-  sendEmail(sanitizedFormData);
 
-  res.status(200).send('Form submission successful');
+  if (!/^\d+$/.test(formData.phone)) {
+    return res.status(400).send('Invalid Phone Number.');
+  }
+
+  const sanitizedFormData = {
+    'name': sanitizeHtml(formData['name']),
+    'surname': sanitizeHtml(formData['surname']),
+    'company': sanitizeHtml(formData['company']),
+    'email': sanitizeHtml(formData['email']),
+    'phone': sanitizeHtml(formData['phone']),
+    'message': sanitizeHtml(formData['message']),
+  };
+
+  try {
+    const result = await sendEmail(sanitizedFormData);
+    res.status(200).send(result);
+  } catch (error) {
+    res.status(500).send(error); 
+  }
 });
 
 const PORT = process.env.PORT || 3000;
