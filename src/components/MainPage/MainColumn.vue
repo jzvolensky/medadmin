@@ -45,6 +45,7 @@ export default {};
   flex: 1;
   background-color: #ffffff;
   margin: 10px;
+  padding: 10px;
   border-radius: 10px;
 }
 
